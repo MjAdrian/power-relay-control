@@ -1,0 +1,39 @@
+{
+    "configurations": [
+        
+        // TODO check if windows works
+        {
+            "name": "Windows",
+            "includePath": [
+                "${env:PICO_SDK_PATH}/**",
+                "${workspaceFolder}/**",
+                "C:/Program Files (x86)/GNU Arm Embedded Toolchain/12.2.rel1/include",
+                "C:/Program Files (x86)/GNU Arm Embedded Toolchain/12.2.rel1/arm-none-eabi/include"
+            ],
+            "compileCommands": "${workspaceFolder}/build/compile_commands.json",
+            "compilerPath": "C:/Program Files (x86)/GNU Arm Embedded Toolchain/12.2.rel1/bin/arm-none-eabi-gcc.exe",
+            "intelliSenseMode": "gcc-arm" //,
+            // "defines": [
+            //     "PICO_ON_DEVICE=1",
+            //     "NDEBUG"
+            // ]
+        },
+        {
+            "name": "Linux",
+            "includePath": [
+                "${env:PICO_SDK_PATH}/**",
+                "${workspaceFolder}/**",
+                "/usr/include/**",
+                "/usr/local/include/**"
+            ],
+            "compileCommands": "${workspaceFolder}/build/compile_commands.json",
+            "compilerPath": "/usr/bin/arm-none-eabi-gcc",
+            "intelliSenseMode": "gcc-arm" //,
+            // "defines": [
+            //     "PICO_ON_DEVICE=1",
+            //     "NDEBUG"
+            // ]
+        }
+    ],
+    "version": 4
+}
