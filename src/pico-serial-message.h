@@ -1,5 +1,5 @@
-#ifndef __SERIAL_MESSAGE_H__
-#define __SERIAL_MESSAGE_H__
+#ifndef __PICO_SERIAL_MESSAGE_H__
+#define __PICO_SERIAL_MESSAGE_H__
 
 #include "pico/stdlib.h"
 
@@ -7,7 +7,7 @@
 
 #define PAYLOAD_MAX_LEN 8
 
-#define SYNC_VALUE 6721
+#define SYNC_VALUE 0x6721
 #define SYNC_HI (uint8_t) (SYNC_VALUE >> 8)
 #define SYNC_LO (uint8_t) (SYNC_VALUE & 0xFF)
 
@@ -39,4 +39,4 @@ typedef enum {
 error_t ReadSerialMsg(serial_msg_t *msg);
 void SendSerialMsg(const serial_msg_t *msg);
 
-#endif // #ifndef __SERIAL_MESSAGE_H__
+#endif // #ifndef __PICO_SERIAL_MESSAGE_H__

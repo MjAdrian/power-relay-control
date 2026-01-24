@@ -1,7 +1,9 @@
 CC = gcc
 CFLAGS = -std=c11 -Wall -Wextra -Werror
 
-CRC_DIR = ../src
+INCLUDE_DIR = ../include
+
+CRC_DIR = $(INCLUDE_DIR)/crc8
 CRC_SRC = $(CRC_DIR)/crc8.c
 
 TEST_DIR = .

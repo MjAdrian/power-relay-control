@@ -1,4 +1,4 @@
-#include "serial-message.h"
+#include "pico-serial-message.h"
 #include "crc8.h"
 
 /* ----------------------------- LOCAL FUNCTIONS ---------------------------- */
@@ -21,6 +21,10 @@ static uint8_t GetMsgCRC(serial_msg_t *msg) {
 error_t ReadSerialMsg(serial_msg_t *msg) {
 
     msg->sync.bytes.high = getchar_timeout_us(0);
+    if (SYNC_HI != msg->sync.bytes.high) {
+        return ERR_WRONG_SYNC;
+    }
+    
     msg->sync.bytes.low = getchar_timeout_us(1);
     if (SYNC_VALUE != msg->sync.value) {
         return ERR_WRONG_SYNC;

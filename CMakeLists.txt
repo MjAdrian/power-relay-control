@@ -21,15 +21,18 @@ set(CMAKE_ASM_COMPILER arm-none-eabi-gcc)
 set(CMAKE_C_FLAGS "-mcpu=cortex-m0plus -mthumb")
 set(CMAKE_EXE_LINKER_FLAGS "-mcpu=cortex-m0plus -mthumb")
 
+add_subdirectory(
+	include/crc8
+)
+
 add_executable(power-relay-control
     src/main.c
-    src/crc8.c
-    src/serial-message.c
+    src/pico-serial-message.c
 )
 pico_enable_stdio_usb(power-relay-control 1)
 pico_enable_stdio_uart(power-relay-control 0)
 
 pico_add_extra_outputs(power-relay-control)
 
-target_link_libraries(power-relay-control pico_stdlib hardware_gpio hardware_irq hardware_i2c hardware_spi)
+target_link_libraries(power-relay-control pico_stdlib hardware_gpio hardware_irq hardware_i2c hardware_spi crc8)
 

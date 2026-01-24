@@ -13,9 +13,9 @@
  * @brief Struct for CRC8 configuration
  */
 typedef struct {
-  uint16_t initial;         /**< Initial CRC value */
-  uint16_t polynome;        /**< CRC polynomial  */
-  uint16_t final_xor_value; /**< Final XOR value of CRC8, not implemented yet  */
+  uint8_t initial;         /**< Initial CRC value */
+  uint8_t polynome;        /**< CRC polynomial  */
+  uint8_t final_xor_value; /**< Final XOR value of CRC8, not implemented yet  */
   bool reverse_input;       /**< Reverses inputed value before starting algorithm if True */
   bool reverse_output;      /**< Reverses Output after algorithm is done */
 } crc8_config_t;
@@ -25,9 +25,9 @@ typedef struct {
 /* -------------------------------------------------------------------------- */
 
 /**
- * @brief Computes CRC-8 with custom configuration. The default uses the SMBUS configuration.
+ * @brief Computes CRC-8 with custom configuration. The default uses the CCITT/SMBUS configuration.
  * 
- * If `cfg` is NULL, it defaults to CRC-8 SMBUS (poly 0x07, init 0x00).
+ * If `cfg` is NULL, it defaults to CRC-8 CCITT/SMBUS (poly 0x07, init 0x00).
  * 
  * @param data (const uint8_t *) Pointer to the input data buffer
  * @param length (size_t) Number of bytes in the input data buffer.
