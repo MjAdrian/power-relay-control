@@ -2,7 +2,8 @@
 #include "pico/stdio.h"
 #include "stdio.h"
 
-#include "pico-serial-message.h"
+#include "power-relay-control.h"
+// #include "pico-serial-message.h"
 
 int main() {
     stdio_init_all();
@@ -12,9 +13,9 @@ int main() {
     while(1) {
         tight_loop_contents();
 
-        error_t status = ReadSerialMsg(&msg);
+        msg_error_t status = ReadSerialMsg(&msg);
         if (SUCCESS == status) {
-            SendSerialMsg(&msg);
+            ParseMsg(&msg);
         } else if (ERR_WRONG_SYNC != status) {
             putchar_raw(0xFF);
         }

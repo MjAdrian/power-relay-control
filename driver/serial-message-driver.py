@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 import serial
 import struct
 from crc import Calculator, Crc8
@@ -6,6 +7,14 @@ class SerialMsg:
     SYNC = 0x6721
     PAYLOAD_MAX_LEN = 8
     __crc_calc = Calculator(Crc8.CCITT) # if you didnt know, calc is short for calculator
+
+    ACT_META        = 0x00
+    ACT_POWER_REQ   = 0x01
+    ACT_STATUS_REQ  = 0x02
+    ACT_STATUS_RX   = 0x03
+
+    ACK_VALUE       = 0x01
+    NAK_VALUE       = 0x00
 
     def __init__(self, action : int, payload : bytes | list[int], sync : int = SYNC):
         """
@@ -47,7 +56,7 @@ class SerialMsg:
         crc8_byte = struct.pack("<B", crc8 & 0xFF)
 
         return sync_bytes + middle_bytes + crc8_byte
-
+    
     def get_checksum(self) -> int:
         '''
         Method that calculates the checksum of the current message
@@ -162,7 +171,9 @@ class PicoSerial:
             print(f"Received: {result}")
         return result
 
-
+# TODO: see if there is a better way to make ack and nak message
+ACK_MSG = SerialMsg(SerialMsg.ACT_META, [SerialMsg.ACK_VALUE])
+NAK_MSG = SerialMsg(SerialMsg.ACT_META, [SerialMsg.NAK_VALUE])
 
 if __name__ == "__main__":
     PORT = "/dev/ttyACM0"
@@ -206,6 +217,8 @@ if __name__ == "__main__":
             device.send_msg(action, payload)
             
             output = device.read_msg(True)        
+    except KeyboardInterrupt:
+        print("\nKeyboard interupt has occured")
     finally:
         print(stars)
         print("Program is ending...")

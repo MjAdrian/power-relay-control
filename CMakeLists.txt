@@ -28,6 +28,7 @@ add_subdirectory(
 add_executable(power-relay-control
     src/main.c
     src/pico-serial-message.c
+    src/power-relay-control.c
 )
 pico_enable_stdio_usb(power-relay-control 1)
 pico_enable_stdio_uart(power-relay-control 0)
