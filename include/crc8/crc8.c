@@ -7,7 +7,7 @@
 /**
  * @brief Function that reverses word passed
  * 
- * @param w (uint8_t)
+ * @param b (uint8_t)
  * @return `uint8_t`
  */
 static uint8_t reverse_byte(uint8_t b) {

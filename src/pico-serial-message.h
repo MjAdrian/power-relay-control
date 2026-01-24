@@ -36,7 +36,19 @@ typedef enum {
 
 /* ------------------------------- PROTOTYPES ------------------------------- */
 
+/**
+ * @brief Reads the Serial Buffer 
+ * 
+ * @param msg (serial msg_t *): pointer to the message variable
+ * @return error_t
+ */
 error_t ReadSerialMsg(serial_msg_t *msg);
+
+/**
+ * @brief Sends a message to the Serial Buffer
+ * 
+ * @param msg (serial msg_t *): pointer to the message variable
+ */
 void SendSerialMsg(const serial_msg_t *msg);
 
 #endif // #ifndef __PICO_SERIAL_MESSAGE_H__
