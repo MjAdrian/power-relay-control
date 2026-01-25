@@ -7,6 +7,11 @@
 
 /* ---------------------------- GLOBAL FUNCTIONS ---------------------------- */
 
+void PowerPinInit(uint8_t toogle_pin) {
+    gpio_init(toogle_pin);
+    gpio_set_dir(toogle_pin, GPIO_OUT);
+}
+
 uint8_t ParseMsg(const serial_msg_t *msg) {
 
     if (NULL == msg) {
@@ -18,32 +23,37 @@ uint8_t ParseMsg(const serial_msg_t *msg) {
 
     bool power_val = 0;
 
-    serial_msg_t new_msg;
+    serial_msg_t new_msg = {.sync.value = SYNC_VALUE};
 
     switch (action) {
         case ACT_META:
             // shouldnt have received ACT_META from computer
-            SendSerialMsg(&nak_msg);
-            return 0;
+            return SendSerialMsg(&nak_msg);
         case ACT_POWER_REQ:
             power_val = msg->payload[0];
             gpio_put(TOGGLE_PIN, power_val);
 
             if (gpio_get(TOGGLE_PIN) == power_val) {
-                SendSerialMsg(&ack_msg);
+                return SendSerialMsg(&ack_msg);
             } else {
-                SendSerialMsg(&nak_msg);
+                return SendSerialMsg(&nak_msg);
             }
 
-            return 0;
         case ACT_STATUS_REQ:
+            new_msg.action = ACT_STATUS_RX;
+            new_msg.payload_len = 1;
 
-            return 0;
+            new_msg.payload[0] = gpio_get(TOGGLE_PIN);
+
+            new_msg.crc = GetMsgCRC(&new_msg);
+
+            return SendSerialMsg(&new_msg);
+
         case ACT_STATUS_RX:
             // should never receive ACT_STATUS_RX, this is meant to be from us
-            SendSerialMsg(&nak_msg);
-            return 0;
+            return SendSerialMsg(&nak_msg);
+
         default:
-            return 1;
+            return ERR_MISC;
     }
 }

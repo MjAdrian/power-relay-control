@@ -14,8 +14,8 @@
 #define ACK_VALUE 0x01
 #define NAK_VALUE 0x00
 
-#define ACK_CRC 0x15
-#define NAK_CRC 0x12
+#define ACK_CRC 0x12
+#define NAK_CRC 0x15
 
 /* ------------------------ STRUCTS, UNIONS and ENUMS ----------------------- */
 
@@ -101,6 +101,14 @@ extern const serial_msg_t nak_msg;
 /* ------------------------------- PROTOTYPES ------------------------------- */
 
 /**
+ * @brief Gets the CRC8 checksum value of a message passed.
+ * 
+ * @param msg (serial_msg_t *): pointer to the message.
+ * @return uint8_t: CRC8 value.
+ */
+uint8_t GetMsgCRC(const serial_msg_t *msg);
+
+/**
  * @brief Reads the Serial Buffer 
  * 
  * @param msg (serial msg_t *): pointer to the message variable
@@ -113,7 +121,9 @@ msg_error_t ReadSerialMsg(serial_msg_t *msg);
  * @brief Sends a message to the Serial Buffer
  * 
  * @param msg (serial msg_t *): pointer to the message variable
+ * @return msg_error_t: error status of message
+ * @retval SUCCESS: message is valid. Any other value is an error, see msg_error_t.
  */
-void SendSerialMsg(const serial_msg_t *msg);
+msg_error_t SendSerialMsg(const serial_msg_t *msg);
 
 #endif // #ifndef __PICO_SERIAL_MESSAGE_H__

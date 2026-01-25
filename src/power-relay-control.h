@@ -10,6 +10,8 @@
 
 /* ------------------------------- PROTOTYPES ------------------------------- */
 
+void PowerPinInit(uint8_t toogle_pin);
+
 /**
  * @brief Function that gets a message and performs the action in it. This is typically project-specific.
  * 

@@ -22,25 +22,6 @@ const size_t actions_list_size = sizeof(actions_list) / sizeof(actions_list[0]);
 /* ----------------------------- LOCAL FUNCTIONS ---------------------------- */
 
 /**
- * @brief Gets the CRC8 checksum value of a message passed.
- * 
- * @param msg (serial_msg_t *): pointer to the message.
- * @return uint8_t: CRC8 value.
- */
-static uint8_t GetMsgCRC(serial_msg_t *msg) {
-    //TODO: this is cursed, find a better way
-    uint8_t arr[PAYLOAD_MAX_LEN+2];
-    arr[0] = msg->action;
-    arr[1] = msg->payload_len;
-    
-    for (int i = 0; i < msg->payload_len; i++) {
-        arr[2+i] = msg->payload[i];
-    }
-
-    return crc8(arr, msg->payload_len+2, NULL);
-}
-
-/**
  * @brief Linear search to see if the action passed is in action_list
  * 
  * @param action (actions_options_t): action enum value from message.
@@ -79,12 +60,34 @@ static msg_error_t ValidateSerialMsg(const serial_msg_t *msg) {
         return ERR_WRONG_PAYLOAD_LEN;
     }
 
+    uint8_t calculatedCRC = GetMsgCRC(msg);
+    if (calculatedCRC != msg->crc) {
+        return ERR_WRONG_CHECKSUM;
+    }
+
     return SUCCESS;
 }
 
 /* ---------------------------- GLOBAL FUNCTIONS ---------------------------- */
 
+uint8_t GetMsgCRC(const serial_msg_t *msg) {
+    //TODO: this is cursed, find a better way
+    uint8_t arr[PAYLOAD_MAX_LEN+2];
+    arr[0] = msg->action;
+    arr[1] = msg->payload_len;
+    
+    for (int i = 0; i < msg->payload_len; i++) {
+        arr[2+i] = msg->payload[i];
+    }
+
+    return crc8(arr, msg->payload_len+2, NULL);
+}
+
+
 msg_error_t ReadSerialMsg(serial_msg_t *msg) {
+    if (NULL == msg) {
+        return ERR_MISC;
+    }
 
     msg->sync.bytes.high = getchar_timeout_us(0);
     if (SYNC_HI != msg->sync.bytes.high) {
@@ -109,19 +112,18 @@ msg_error_t ReadSerialMsg(serial_msg_t *msg) {
     }
 
     msg->crc = getchar_timeout_us(1);
-
-    uint8_t calculatedCRC = GetMsgCRC(msg);
-
-    if (calculatedCRC != msg->crc) {
-        return ERR_WRONG_CHECKSUM;
-    }
     
     return ValidateSerialMsg(msg);
 }
 
-void SendSerialMsg(const serial_msg_t *msg) {
+msg_error_t SendSerialMsg(const serial_msg_t *msg) {
     if (NULL == msg) {
-        return;
+        return ERR_MISC;
+    }
+
+    msg_error_t valid_state = ValidateSerialMsg(msg);
+    if (SUCCESS != valid_state) {
+        return valid_state;
     }
 
     putchar_raw(msg->sync.bytes.high);
@@ -136,4 +138,6 @@ void SendSerialMsg(const serial_msg_t *msg) {
     }
 
     putchar_raw(msg->crc);
+
+    return SUCCESS;
 }
