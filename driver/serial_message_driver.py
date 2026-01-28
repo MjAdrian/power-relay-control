@@ -3,7 +3,15 @@ import serial
 import struct
 from crc import Calculator, Crc8
 
-class SerialMsg:
+class _SerialMsgMeta(type):
+    def __init__(cls, name, bases, ns):
+        super().__init__(name, bases, ns)
+        if name == "SerialMsg":
+            cls.ACK_MSG = cls(cls.ACT_META, [cls.ACK_VALUE])
+            cls.NAK_MSG = cls(cls.ACT_META, [cls.NAK_VALUE])
+
+
+class SerialMsg(metaclass=_SerialMsgMeta):
     SYNC = 0x6721
     PAYLOAD_MAX_LEN = 8
     __crc_calc = Calculator(Crc8.CCITT) # if you didnt know, calc is short for calculator
@@ -15,6 +23,9 @@ class SerialMsg:
 
     ACK_VALUE       = 0x01
     NAK_VALUE       = 0x00
+
+    MIN_SIZE = 5
+    MAX_SIZE = PAYLOAD_MAX_LEN + MIN_SIZE
 
     def __init__(self, action : int, payload : bytes | list[int], sync : int = SYNC):
         """
@@ -40,7 +51,7 @@ class SerialMsg:
 
         self.sync = sync & 0xFFFF
         self.action = action & 0xFF
-        self.payload = bytes(payload[:SerialMsg.PAYLOAD_MAX_LEN])
+        self.payload = bytes(payload[:type(self).PAYLOAD_MAX_LEN])
 
     def convert_msg_to_bytes(self) -> bytes:
         '''
@@ -68,6 +79,15 @@ class SerialMsg:
         data = struct.pack("<BB", self.action & 0xFF, length & 0xFF) + self.payload
         return SerialMsg.__crc_calc.checksum(data)
 
+    def __str__(self):
+        payload = ''.join(f'x{byte:02x}' for byte in self.payload)
+        return f"Sync = {hex(self.sync)}, Action = {self.action}, Payload length = {len(self.payload)}, Payload = {payload}, CRC8 = {hex(self.get_checksum())}"
+
+    def __eq__(self, value) -> bool:
+        if not isinstance(value, SerialMsg):
+            return NotImplemented
+
+        return (self.sync == value.sync and self.action == value.action and self.payload == value.payload and self.get_checksum() == value.get_checksum())
 
 class PicoSerial:
     '''
@@ -143,7 +163,7 @@ class PicoSerial:
         msg = SerialMsg(action, bytes(payload))
         self.sent_buf = msg.convert_msg_to_bytes()
 
-        if (self.logging):
+        if self.logging:
             print(f"Sending: {self.__stringify(self.sent_buf)}")
 
         self.ser.write(self.sent_buf)
@@ -170,10 +190,42 @@ class PicoSerial:
         if self.logging:
             print(f"Received: {result}")
         return result
+    
+    def parse_received_buf(self) -> SerialMsg | None:
+        buf = self.received_buf
+        buf_size = len(buf)
 
-# TODO: see if there is a better way to make ack and nak message
-ACK_MSG = SerialMsg(SerialMsg.ACT_META, [SerialMsg.ACK_VALUE])
-NAK_MSG = SerialMsg(SerialMsg.ACT_META, [SerialMsg.NAK_VALUE])
+        if buf_size < SerialMsg.MIN_SIZE:
+            if self.logging:
+                print("Size of buffer is too small to be a message.")
+            return None
+                
+        sync = (buf[0] << 8) | buf[1]
+        action = buf[2]
+        payload_len = buf[3]
+
+        expected_len = 4 + payload_len + 1
+        if buf_size != expected_len:
+            if self.logging:
+                print(f"Size of message is not the expected length. Received = {buf_size}, expected = {expected_len}.")
+            return None
+        
+        payload = buf[4 : 4 + payload_len]
+        crc8 = buf[4 + payload_len]
+
+        msg = SerialMsg(action, payload, sync=sync)
+
+        if self.logging:
+            print(msg)
+
+        if crc8 != msg.get_checksum():
+            if self.logging:
+                print("Received CRC does not match calculated CRC")
+                print(f"Given = {crc8}, Calculated = {msg.get_checksum()}")
+            return None
+        
+        return msg        
+
 
 if __name__ == "__main__":
     PORT = "/dev/ttyACM0"
@@ -215,8 +267,19 @@ if __name__ == "__main__":
             print(f"action = {action}, payload = {payload}, length = {len(payload)}")
 
             device.send_msg(action, payload)
-            
+
             output = device.read_msg(True)        
+            received_msg = device.parse_received_buf()
+
+            if (received_msg == SerialMsg.ACK_MSG):
+                print("Recieved an ACK")
+            elif received_msg == SerialMsg.NAK_MSG:
+                print("Received a NAK")
+            elif received_msg is not None:
+                print("Some other type of message was received")
+            else:
+                print("There was an error when parsing the message")
+
     except KeyboardInterrupt:
         print("\nKeyboard interupt has occured")
     finally:

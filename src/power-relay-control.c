@@ -30,7 +30,7 @@ uint8_t ParseMsg(const serial_msg_t *msg) {
             // shouldnt have received ACT_META from computer
             return SendSerialMsg(&nak_msg);
         case ACT_POWER_REQ:
-            power_val = msg->payload[0];
+            power_val = !!(msg->payload[0]);
             gpio_put(TOGGLE_PIN, power_val);
 
             if (gpio_get(TOGGLE_PIN) == power_val) {
