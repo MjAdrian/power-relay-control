@@ -77,7 +77,43 @@ class SerialMsg(metaclass=_SerialMsgMeta):
         '''
         length = len(self.payload)
         data = struct.pack("<BB", self.action & 0xFF, length & 0xFF) + self.payload
-        return SerialMsg.__crc_calc.checksum(data)
+        return SerialMsg.__crc_calc.checksum(data) & 0xFF
+    
+    @staticmethod
+    def listToMsg(arr: bytes| list[int]) -> SerialMsg | None:
+        '''
+        Method to convert bytes or int list to a serial message
+
+        :param arr: List of ints
+        :type arr: bytes or list[int]
+        
+        :return: SerialMsg object of the list if successfull or None o/w
+        :rtype: SerialMsg or None 
+        '''
+
+        # Check is list is within expected range of a serial message
+        if len(arr) < SerialMsg.MIN_SIZE or len(arr) > SerialMsg.MAX_SIZE:
+            return None
+        
+        # second length check of payload len byte to see if it is withing expected range
+        payload_len = arr[3]
+        expected_len = 2 + 1 + 1 + payload_len + 1
+        if len(arr) != expected_len:
+            return None
+
+        # get other bytes
+        sync = ((arr[0] << 8) | arr[1]) & 0xFFFF
+        action = arr[2] & 0xFF
+        payload = arr[4:4 + payload_len]
+        received_crc = arr[-1] & 0xFF
+
+        msg = SerialMsg(action, payload, sync=sync)
+
+        # Crc check if valid
+        if received_crc != msg.get_checksum():
+            return None
+        
+        return msg
 
     def __str__(self):
         payload = ''.join(f'x{byte:02x}' for byte in self.payload)

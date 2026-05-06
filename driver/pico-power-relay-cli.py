@@ -2,6 +2,7 @@
 from serial_message_driver import PicoSerial, SerialMsg
 from serial import SerialException
 import argparse
+import sys
 
 def buildPowerRelayParser() -> argparse.ArgumentParser:
     '''
@@ -47,7 +48,8 @@ def buildPowerRelayParser() -> argparse.ArgumentParser:
                    help="Baud rate (default: 115200)." 
                    )
     p.add_argument(*timeout_flags,
-                   type=int,
+                   type=float,
+                   default=0.1,
                    help="Timeout time in seconds (default:0.1s)."
                    )
 
@@ -78,23 +80,21 @@ def sendPower(dev: PicoSerial, args: argparse.Namespace) -> int:
         print("Sending Power Request Message...")
 
     if args.power == "on" or args.power == "1":
-        if args.verbose:
-            print("Turning on power...")
+        print("Turning on power...")
         dev.send_msg(SerialMsg.ACT_POWER_REQ, [1])
     elif args.power == "off" or args.power == "0":
-        if args.verbose:
-            print("Turning off power...")
+        print("Turning off power...")
         dev.send_msg(SerialMsg.ACT_POWER_REQ, [0])
     else:
-        if args.verbose:
-            print("How???")
+        print("How did you get here???")
         pass
 
-    receieved_msg = dev.read_msg()
+    receieved_list = dev.read_msg()
+    receieved_msg = SerialMsg.listToMsg(receieved_list)
 
     if args.verbose:
         msg_type = "ACK message" if receieved_msg == SerialMsg.ACK_MSG else "NAK message" if receieved_msg == SerialMsg.NAK_MSG else receieved_msg
-        print(f"Received: {msg_type}") # i am so sorry
+        print(msg_type)
 
     return 0
 
@@ -118,10 +118,10 @@ def sendStatus(dev: PicoSerial, args: argparse.Namespace) -> int:
 
     dev.send_msg(SerialMsg.ACT_STATUS_REQ, [])
 
-    receieved_msg = dev.read_msg()
+    receieved_list = dev.read_msg()
+    receieved_msg = SerialMsg.listToMsg(receieved_list)
 
-    if args.verbose:
-        print(f'Recevied: {receieved_msg}')
+    print(receieved_msg)
 
     return 0
 
@@ -129,9 +129,13 @@ def main():
     parser = buildPowerRelayParser()
     args = parser.parse_args()
 
+    if len(sys.argv) == 1:
+        parser.print_help()
+        return 0
+
     dev = None
     try: 
-        dev = PicoSerial(port=args.port, baud=args.baud, timeout=args.timeout)
+        dev = PicoSerial(port=args.port, baud=args.baud, timeout=args.timeout, logging=args.verbose)
     except SerialException as e:
         print(f"Serial Device error:\n{e}")
         return 1
